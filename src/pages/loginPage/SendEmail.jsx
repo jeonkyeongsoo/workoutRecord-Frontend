@@ -11,7 +11,7 @@ export default function SendEmail () {
     const [errorMsg, setErrorMsg] = useState("");
     const navigate = useNavigate();
 
-    const clickNext = () => {
+    const clickNext = async () => {
         setErrorMsg("");
 
         if(!email || email === ""){
@@ -24,15 +24,25 @@ export default function SendEmail () {
            return;
         }
 
+        const loginId = sessionStorage.getItem("loginId");
 
+        try{
+            const res = await api.post("/sendMail", {email: email, type: "resetPassword", loginId: loginId}, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
 
-        api.post("/api/sendEmail", {email: email, type: "resetPassword"})
-        .then(res => {
-            if(res.status === 200){
-                console.log(res.data);
+            if(res.statusText === "OK") {
+                sessionStorage.setItem("email", email);
+                navigate("/forgotPassword/confirmAuthCode");
             }
-        })
 
+        } catch (err) {
+            console.log(err?.response);
+            const errMsg = err?.response?.data;
+            setErrorMsg(errMsg);
+        }
 
     }
 

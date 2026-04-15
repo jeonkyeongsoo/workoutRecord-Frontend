@@ -1,45 +1,31 @@
-import { IconArrowLeft } from '@tabler/icons-react';
-import {Anchor, Box, Button, Center, Container, Group, Paper, Text, TextInput, Title} from "@mantine/core";
-import classes from "../../css/loginPage/forgotPassword.module.css";
-import {useNavigate, Link} from "react-router-dom";
-import {useState} from "react";
+import classes from "../../css/loginPage/confirmAuthCode.module.css";
+import {Anchor, Box, Button, Center, Container, Group, Paper, PinInput, Text, TextInput, Title} from "@mantine/core";
+import {IconArrowLeft} from "@tabler/icons-react";
+import {Link} from "react-router-dom";
 import api from "../../api/api.js";
+import {useState} from "react";
 
-export default function ForgotPassword() {
-    const [loginId, setLoginId] = useState('');
-    const navigate = useNavigate();
-    const [errorMsg, setErrorMsg] = useState('');
+export default function ConfirmAuthCode() {
+    const [errorMsg, setErrorMsg] = useState("");
 
-    const confirmUserByLoginId = () => {
-        setErrorMsg('');
+    const handleverifyCode = (value) => {
 
-        if(!loginId || loginId.trim() === "") {
-            setErrorMsg("아이디를 입력하세요.");
-            return;
-        }
+        const email = sessionStorage.getItem("email");
 
-        api.post('/forgotPassword/confirmUserByLoginId', {loginId})
-            .then(res => {
-
+        api.post("/verifyCode", {email: email, authCode: value})
+            .then((res) => {
                 console.log(res);
-                if(res.statusText === "OK") {
-                    sessionStorage.setItem("loginId", loginId);
-                    navigate("/forgotPassword/sendEmail");
-                }
+                sessionStorage.removeItem("email");
             })
             .catch((err) => {
                 const errMsg = err?.response?.data;
                 setErrorMsg(errMsg);
                 console.log(errMsg);
             })
-    }
 
-    const handleKeyDown = (e) => {
-        if(e.key === "Enter") {
-            confirmUserByLoginId();
-        }
-    }
 
+
+    }
 
     return (
         <>
@@ -49,11 +35,11 @@ export default function ForgotPassword() {
                         비밀번호를 잊어버렸나요?
                     </Title>
                     <Text c="dimmed" fz="sm" ta="center" my="md">
-                        아이디를 입력하세요.
+                        인증코드를 입력하세요.
                     </Text>
 
                     <Paper withBorder shadow="md" p={30} radius="md" mt="xl">
-                        <TextInput label="아이디" placeholder="아이디" required onKeyDown={handleKeyDown} value={loginId} onChange={(e) => setLoginId(e.target.value)}/>
+                        <PinInput length={6} type="number" mask placeholder="" oneTimeCode size="lg" onComplete={(value) => console.log(value)}/>
                         <Text c="dimmed" fz="sm" ta="center" mt="md" c="red">
                             {errorMsg}
                         </Text>
@@ -66,7 +52,6 @@ export default function ForgotPassword() {
                                     <Box ml={5}><Anchor component={Link} to="/">로그인으로 돌아가기</Anchor></Box>
                                 </Center>
                             </Anchor>
-                            <Button className={classes.control} onClick={confirmUserByLoginId}>다음</Button>
                         </Group>
                     </Paper>
                 </Container>
