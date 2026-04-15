@@ -1,0 +1,15 @@
+.layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.body-area {
+    display: flex;
+    flex: 1;
+}
+
+.content-page {
+    flex: 1;
+    padding: 24px;
+}
