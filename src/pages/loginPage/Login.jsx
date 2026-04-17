@@ -65,7 +65,7 @@ export default function LoginForm() {
                 }
 
                 if(res.data.result === "success"){
-                    navigate("/main");
+                    navigate("/main/home");
                 }
             }
 
