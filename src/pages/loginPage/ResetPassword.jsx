@@ -1,30 +1,27 @@
-import classes from "../../css/loginPage/confirmAuthCode.module.css";
-import {Anchor, Box, Button, Center, Container, Group, Paper, PinInput, Text, TextInput, Title} from "@mantine/core";
+import classes from "../../css/loginPage/sendEmail.module.css";
+import {Anchor, Box, Button, Center, Container, Group, Paper, Text, Title, PasswordInput} from "@mantine/core";
 import {IconArrowLeft} from "@tabler/icons-react";
 import {Link, useNavigate, useSearchParams} from "react-router-dom";
-import api from "../../api/api.js";
 import {useEffect, useRef, useState} from "react";
+import api from "../../api/api.js";
 
-export default function ConfirmAuthCode() {
+export default function ResetPassword() {
+    const loginId = sessionStorage.getItem("loginId");
+    const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [errorMsg, setErrorMsg] = useState("");
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const [timer, setTimer] = useState(300);
-    const [isExpired, setIsExpired] = useState(false);
-    const [pin, setPin] = useState("")
-
     const session = searchParams.get("session");
     const alertShown = useRef(false);
-    const email = sessionStorage.getItem("email");
-    const loginId = sessionStorage.getItem("loginId");
 
-    useEffect(() => {
+    /*useEffect(() => {
         if(!session && !alertShown.current) {
             alertShown.current = true;
             alert("잘못된 접근입니다.");
             navigate("/");
         }
-    },[]);
+    },[]);*/
 
     // 브라우저 뒤로가기 누를시에 비밀번호 찾기 처음 페이지로 보내버림.
     useEffect(() => {
@@ -42,47 +39,30 @@ export default function ConfirmAuthCode() {
         }
     }, []); // [] 의존성 배열 -> 마운트 될 때 딱 한번만 실행
 
-    useEffect(() => {
-        if(timer === 0) {
-            setIsExpired(true);
+    const clickNext = () => {
+        setErrorMsg("");
+
+        if(!password || password === "" || !confirmPassword || confirmPassword === ""){
+            setErrorMsg("필수항목을 채우세요.");
             return;
         }
 
-        const interval = setInterval(() => {
-            setTimer(prev => prev - 1);
-        }, 1000);
+        let passwordReg = /^(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+~`\-={}[\]:;"'<>,.?/\\]).{8,}$/;
+        if(!passwordReg.test(password) || !passwordReg.test(confirmPassword)){
+            setErrorMsg("비밀번호를 다시 입력하세요.");
+            return;
+        }
 
-        return () => clearInterval(interval);
-    }, [timer]);
+        if(password !== confirmPassword){
+            setErrorMsg("비밀번호가 일치하지 않습니다. 다시 한번 확인하세요.");
+            return;
+        }
 
-    const formatTime = (seconds) => {
-        const m = String(Math.floor(seconds / 60)).padStart(2, '0');
-        const s = String(seconds % 60).padStart(2, '0');
-        return `${m}:${s}`;
-    }
-
-    // 재전송
-    const resendEmail = () => {
-        setTimer(300);
-        setIsExpired(false);
-        setErrorMsg("");
-        setPin("");
-
-        api.post("/sendMail", {email: email, type: "resendAuthCode", loginId: loginId})
-            .catch((err) => {
-                const errMsg = err?.response?.data;
-                setErrorMsg(errMsg);
-            })
-
-    }
-
-    const handleVerifyCode = (value) => {
-
-        api.post("/verifyCode", {email: email, authCode: value})
+        api.post("/resetPassword", {loginId: loginId, password: password})
             .then((res) => {
-                sessionStorage.removeItem("email");
                 if(res.statusText === "OK") {
-                    navigate("/forgotPassword/resetPassword?session=" + session);
+                    sessionStorage.removeItem("loginId");
+                    navigate("/");
                 }
             })
             .catch((err) => {
@@ -99,21 +79,15 @@ export default function ConfirmAuthCode() {
                         비밀번호를 잊어버렸나요?
                     </Title>
                     <Text c="dimmed" fz="sm" ta="center" my="md">
-                        인증코드를 입력하세요.
+                        비밀번호를 입력하세요.
                     </Text>
 
                     <Paper withBorder shadow="md" p={30} radius="md" mt="xl">
-                        <PinInput length={6} type="number" mask placeholder="" oneTimeCode size="lg" value={pin} onChange={setPin} onComplete={(value) => handleVerifyCode(value)}/>
-                        <Group justify="space-between" mt="md" className={classes.controls}>
-                            <Text c="dimmed" fz="sm" ta="left" mt="md" onClick={resendEmail}>
-                                재전송
-                            </Text>
-                            <Text c="dimmed" fz="sm" ta="right" mt="md">
-                                남은시간 {isExpired ? "00:00" : formatTime(timer)}
-                            </Text>
-                        </Group>
-                        <Text fz="sm" ta="center" mt="md" c="red">
-                            {errorMsg}
+                        <PasswordInput type="password" label="비밀번호" placeholder="비밀번호" required value={password} onChange={(e) => setPassword(e.target.value)}/>
+                        <br/>
+                        <PasswordInput label="비밀번호 확인" placeholder="비밀번호 확인" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}/>
+                        <Text c="dimmed" fz="sm" ta="center" mt="md" c="red">
+                            {errorMsg }
                         </Text>
 
                         <br/><br/>
@@ -124,6 +98,7 @@ export default function ConfirmAuthCode() {
                                     <Box ml={5}><Anchor component={Link} to="/">로그인으로 돌아가기</Anchor></Box>
                                 </Center>
                             </Anchor>
+                            <Button className={classes.control} onClick={clickNext}>다음</Button>
                         </Group>
                     </Paper>
                 </Container>

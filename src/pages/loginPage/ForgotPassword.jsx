@@ -20,11 +20,10 @@ export default function ForgotPassword() {
 
         api.post('/forgotPassword/confirmUserByLoginId', {loginId})
             .then(res => {
-
-                console.log(res);
+                const session = res.data;
                 if(res.statusText === "OK") {
                     sessionStorage.setItem("loginId", loginId);
-                    navigate("/forgotPassword/sendEmail");
+                    navigate("/forgotPassword/sendEmail?session=" + session);
                 }
             })
             .catch((err) => {
@@ -39,7 +38,6 @@ export default function ForgotPassword() {
             confirmUserByLoginId();
         }
     }
-
 
     return (
         <>

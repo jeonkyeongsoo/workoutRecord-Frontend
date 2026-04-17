@@ -1,15 +1,26 @@
 import { IconArrowLeft } from '@tabler/icons-react';
 import {Anchor, Box, Button, Center, Container, Group, Paper, Text, TextInput, Title} from "@mantine/core";
 import classes from "../../css/loginPage/sendEmail.module.css";
-import {useNavigate, Link} from "react-router-dom";
-import {useState} from "react";
+import {useNavigate, Link, useSearchParams} from "react-router-dom";
+import {useEffect, useRef, useState} from "react";
 import api from "../../api/api.js";
 
 export default function SendEmail () {
-
+    const loginId = sessionStorage.getItem("loginId");
     const [email, setEmail] = useState("");
     const [errorMsg, setErrorMsg] = useState("");
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const session = searchParams.get("session");
+    const alertShown = useRef(false);
+
+    useEffect(() => {
+        if(!session && !alertShown.current) {
+            alertShown.current = true;
+            alert("잘못된 접근입니다.");
+            navigate("/");
+        }
+    },[]);
 
     const clickNext = async () => {
         setErrorMsg("");
@@ -24,8 +35,6 @@ export default function SendEmail () {
            return;
         }
 
-        const loginId = sessionStorage.getItem("loginId");
-
         try{
             const res = await api.post("/sendMail", {email: email, type: "resetPassword", loginId: loginId}, {
                 headers: {
@@ -35,15 +44,19 @@ export default function SendEmail () {
 
             if(res.statusText === "OK") {
                 sessionStorage.setItem("email", email);
-                navigate("/forgotPassword/confirmAuthCode");
+                navigate("/forgotPassword/confirmAuthCode?session=" + session);
             }
 
         } catch (err) {
-            console.log(err?.response);
             const errMsg = err?.response?.data;
             setErrorMsg(errMsg);
         }
+    }
 
+    const handleKeyDown = (e) => {
+        if(e.key === "Enter") {
+            clickNext();
+        }
     }
 
     return (
@@ -58,7 +71,7 @@ export default function SendEmail () {
                     </Text>
 
                     <Paper withBorder shadow="md" p={30} radius="md" mt="xl">
-                        <TextInput label="이메일" placeholder="본인확인 이메일" required value={email} onChange={(e) => setEmail(e.target.value)}/>
+                        <TextInput label="이메일" placeholder="본인확인 이메일" required onKeyDown={handleKeyDown} value={email} onChange={(e) => setEmail(e.target.value)}/>
                         <Text c="dimmed" fz="sm" ta="center" mt="md" c="red">
                             {errorMsg}
                         </Text>
