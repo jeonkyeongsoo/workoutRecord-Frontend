@@ -1,21 +1,40 @@
+import { useState } from "react";
+import { Drawer } from "@mantine/core";
+import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar.jsx";
-import {Outlet} from "react-router-dom";
 import Header from "./Header.jsx";
 import "../css/mainLayout.css";
 
 export default function MainLayout() {
+    const [mobileNavOpened, setMobileNavOpened] = useState(false);
 
     return (
         <div className="layout">
-            <Header />
+            <Header
+                mobileNavOpened={mobileNavOpened}
+                onToggleMobileNav={() => setMobileNavOpened((opened) => !opened)}
+            />
 
             <div className="body-area">
-                <Sidebar />
+                <aside className="desktop-sidebar">
+                    <Sidebar />
+                </aside>
 
-                <div className="content-page">
+                <Drawer
+                    opened={mobileNavOpened}
+                    onClose={() => setMobileNavOpened(false)}
+                    title="메뉴"
+                    padding="md"
+                    size="260px"
+                    classNames={{ body: "mobile-drawer-body" }}
+                >
+                    <Sidebar mobile onNavigate={() => setMobileNavOpened(false)} />
+                </Drawer>
+
+                <main className="content-page">
                     <Outlet />
-                </div>
+                </main>
             </div>
         </div>
-    )
+    );
 }

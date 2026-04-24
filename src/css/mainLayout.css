@@ -7,9 +7,29 @@
 .body-area {
     display: flex;
     flex: 1;
+    min-height: 0;
+}
+
+.desktop-sidebar {
+    display: block;
+}
+
+.mobile-drawer-body {
+    padding: 0;
 }
 
 .content-page {
     flex: 1;
+    min-width: 0;
     padding: 24px;
+}
+
+@media (max-width: 768px) {
+    .desktop-sidebar {
+        display: none;
+    }
+
+    .content-page {
+        padding: 16px;
+    }
 }
