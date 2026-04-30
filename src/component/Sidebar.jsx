@@ -50,7 +50,7 @@ function NavbarLink({ icon, label, active, onClick, path, mobile = false }) {
 
 const navItems = [
     { icon: IconHome2, label: "홈", path: "/main/home" },
-    { icon: IconCalendarStats, label: "캘린더", path: "" },
+    { icon: IconCalendarStats, label: "캘린더", path: "/main/calendar" },
     { icon: CiStickyNote, label: "운동루틴", path: "/main/workoutRoutine" },
     { icon: IconGauge, label: "대시보드", path: "" },
     { icon: IconUser, label: "사용자", path: "" },

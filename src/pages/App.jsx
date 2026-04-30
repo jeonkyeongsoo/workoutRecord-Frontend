@@ -7,6 +7,7 @@ import SendEmail from "./loginPage/SendEmail.jsx";
 import ConfirmAuthCode from "./loginPage/ConfirmAuthCode.jsx";
 import ResetPassword from "./loginPage/ResetPassword.jsx";
 import WorkoutRoutine from "./workout/WorkoutRoutine.jsx";
+import Calendar from "./calendar/Calendar.jsx";
 import Home from "./Home.jsx";
 
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
 
             <Route path="/main" element={<MainLayout/>}>
                 <Route path="home" element={<Home/>} />
+                <Route path="calendar" element={<Calendar/>} />
                 <Route path="workoutRoutine" element={<WorkoutRoutine/>} />
             </Route>
         </Routes>

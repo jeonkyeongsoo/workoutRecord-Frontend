@@ -1,0 +1,150 @@
+.calendarPage {
+    width: 100%;
+}
+
+.calendarHeader {
+    margin-bottom: 20px;
+}
+
+.calendarHeader h2 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.calendarHeader p {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.calendarPanel {
+    background: linear-gradient(145deg, #f8fafc, #ecfeff);
+    border: 1px solid #bae6fd;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+}
+
+/* FullCalendar 전체 */
+.calendarPanel :global(.fc) {
+    font-family: inherit;
+}
+
+/* 상단 툴바 */
+.calendarPanel :global(.fc-toolbar) {
+    margin-bottom: 20px;
+}
+
+.calendarPanel :global(.fc-toolbar-title) {
+    font-size: 24px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+/* 버튼 */
+.calendarPanel :global(.fc-button) {
+    background: #0ea5e9 !important;
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 8px 14px !important;
+    font-weight: 700 !important;
+    box-shadow: none !important;
+}
+
+.calendarPanel :global(.fc-button:hover) {
+    background: #0284c7 !important;
+}
+
+/* 요일 */
+.calendarPanel :global(.fc-col-header-cell) {
+    background: #f1f5f9;
+    padding: 10px 0;
+}
+
+.calendarPanel :global(.fc-col-header-cell-cushion) {
+    color: #334155;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+/* 날짜 칸 */
+.calendarPanel :global(.fc-daygrid-day) {
+    background: rgba(255, 255, 255, 0.7);
+    transition: 0.15s ease;
+    cursor: pointer;
+}
+
+.calendarPanel :global(.fc-daygrid-day:hover) {
+    background: #f0f9ff;
+}
+
+/* 오늘 */
+.calendarPanel :global(.fc-day-today) {
+    background: #e0f2fe !important;
+}
+
+/* 날짜 숫자 */
+.calendarPanel :global(.fc-daygrid-day-number) {
+    padding: 8px;
+    color: #334155;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+/* 기본 이벤트 */
+.calendarPanel :global(.fc-event) {
+    border: none !important;
+    border-radius: 999px !important;
+    padding: 4px 8px !important;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* 운동 종류별 색상 */
+.calendarPanel :global(.workout-strength) {
+    background: #0ea5e9 !important;
+}
+
+.calendarPanel :global(.workout-leg) {
+    background: #22c55e !important;
+}
+
+.calendarPanel :global(.workout-cardio) {
+    background: #f97316 !important;
+}
+
+.calendarPanel :global(.fc-event-title) {
+    color: white;
+}
+
+/* 더보기 */
+.calendarPanel :global(.fc-daygrid-more-link) {
+    color: #0284c7;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+/* 모바일 */
+@media (max-width: 768px) {
+    .calendarPanel {
+        padding: 14px;
+        border-radius: 18px;
+    }
+
+    .calendarPanel :global(.fc-toolbar) {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .calendarPanel :global(.fc-toolbar-title) {
+        font-size: 20px;
+    }
+
+    .calendarPanel :global(.fc-button) {
+        padding: 6px 10px !important;
+        font-size: 12px !important;
+    }
+}
