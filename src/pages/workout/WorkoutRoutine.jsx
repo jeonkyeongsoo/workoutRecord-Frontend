@@ -9,10 +9,10 @@ import {
     TextInput,
     Modal,
     Center,
-    Stack, Card, Divider, Badge
+    Stack, Card, Divider, Badge, HoverCard
 } from "@mantine/core";
 import { CiCirclePlus } from "react-icons/ci";
-import { useReducer, useState } from "react";
+import {useEffect, useReducer, useState} from "react";
 import { FaLongArrowAltRight } from "react-icons/fa";
 import api from "../../api/api.js";
 import classes from "../../css/workout/workoutRoutine/workoutRoutine.module.css";
@@ -122,10 +122,9 @@ function routineReducer(state, action) {
     }
 }
 
-const RoutineBasicForm = () => {
+const RoutineBasicForm = ({getSavedRoutines}) => {
     const [state, dispatch] = useReducer(routineReducer, initialState);
 
-    console.log(state);
     async function saveRoutine() {
         const params = {
             templateName: state.routineName,
@@ -146,6 +145,7 @@ const RoutineBasicForm = () => {
         if(res.status === 200){
             alert("운동루틴 저장에 성공했습니다!");
             dispatch({type:"SUCCESS_REQUEST"});
+            await getSavedRoutines();
         }
     }
 
@@ -409,38 +409,402 @@ const ExerciseModal = ({exerciseDraft, setExerciseDraft, bodyParts, saveExercise
     )
 }
 
-const WorkoutRoutineList = () => {
-    const [savedRoutines, setSavedRoutines] = useState([]);
-    const [selectedRoutine, setSelectedRoutine] = useState("전체");
-    const [selectedRoutineId, setSelectedRoutineId] = useState(null);
+const WorkoutRoutineDetail = ({selectedTemplateId}) => {
+    const [selectedRoutine, setSelectedRoutine] = useState(null);
+    const [selectedRoutineDraft, setSelectedRoutineDraft] = useState(null);
 
-    const res = api.get("/routine/view/list");
+    useEffect(() => {
+        if(!selectedTemplateId) return;
+
+        async function getRoutineDetail() {
+            const res = await api.get("/routine/view/detail", { params: {templateId: selectedTemplateId,}})
+
+            const routineDetail = res.data[0];
+
+            setSelectedRoutine(routineDetail);
+
+            setSelectedRoutineDraft({
+                ...routineDetail,
+                exercises: routineDetail.exercises.map((exercise) => ({
+                    ...exercise,
+                    exerciseKey: "exercise-" + crypto.randomUUID(),
+                    sets: exercise.sets.map((set, idx) => ({
+                        ...set,
+                        setNo: idx + 1,
+                        exerciseSetKey: "set-" + crypto.randomUUID(),
+                        })
+                    )
+                    })
+                )
+            })
+
+        }
+
+        getRoutineDetail();
+    }, [selectedTemplateId])
+
+    return (
+        <>
+            <Card withBorder radius="lg" p="md" shadow="xs">
+                <Stack gap="md">
+
+                    {/* 상단 */}
+                    <div>
+                        <Text size="sm" c="dimmed">
+                            {selectedRoutineDraft?.exCategoryName}
+                        </Text>
+                        <Text fw={700} size="lg">
+                            {selectedRoutineDraft?.templateName}
+                        </Text>
+                    </div>
+
+                    <Divider />
+
+                    {/* 운동 리스트 */}
+                    {selectedRoutineDraft?.exercises?.map((exercise) => (
+                        <Card key={exercise.templateItemId ?? exercise.exerciseKey} withBorder radius="md" p="sm">
+
+                            <Stack gap="xs">
+                                {/* 운동명 */}
+                                <Group justify="space-between">
+                                    <Autocomplete
+                                        placeholder="운동 선택 및 작성"
+                                        data={WORKOUT_ROUTINE_LIST[selectedRoutineDraft.exCategoryName] || []}
+                                        value={exercise.exerciseItemName}
+                                        onChange={(value) => setSelectedRoutineDraft({
+                                            ...selectedRoutineDraft,
+                                            exercises: selectedRoutineDraft.exercises.map((ex) =>
+                                                ex.exerciseKey === exercise.exerciseKey ? {
+                                                    ...ex,
+                                                    exerciseItemName: value,
+                                                } : ex
+                                            )}
+                                        )}
+                                    />
+                                    <Badge size="sm">
+                                        {exercise.sets.length}세트
+                                    </Badge>
+                                    <Button
+                                        color="red"
+                                        variant="subtle"
+                                        size="xs"
+                                        onClick={() => setSelectedRoutineDraft({
+                                            ...selectedRoutineDraft,
+                                            exercises: selectedRoutineDraft.exercises.filter((ex) => ex.exerciseKey !== exercise.exerciseKey)
+                                        })}
+                                    >
+                                        운동삭제
+                                    </Button>
+                                </Group>
+
+                                {/* 세트 리스트 */}
+                                {exercise.sets.map((set, idx) => (
+                                    <Group
+                                        key={set.templateSetId ?? set.exerciseSetKey}
+                                        justify="space-between"
+                                        align="center"
+                                        wrap="nowrap"
+                                    >
+                                        {/* 세트 번호 */}
+                                        <Text size="sm" c="dimmed" w={50}>
+                                            {idx + 1}세트
+                                        </Text>
+
+                                        {/* 입력 영역 */}
+                                        <Group gap="xs" wrap="nowrap">
+                                            <NumberInput
+                                                w={80}
+                                                size="sm"
+                                                step={2.5}
+                                                min={0}
+                                                suffix="kg"
+                                                value={set.plannedWeightKg}
+                                                onChange={(value) =>
+                                                    setSelectedRoutineDraft({
+                                                        ...selectedRoutineDraft,
+                                                        exercises: selectedRoutineDraft.exercises.map((ex) => ({
+                                                            ...ex,
+                                                            sets: ex.sets.map((s) =>
+                                                                s.exerciseSetKey === set.exerciseSetKey
+                                                                    ? { ...s, plannedWeightKg: value }
+                                                                    : s
+                                                            ),
+                                                        })),
+                                                    })
+                                                }
+                                            />
+
+                                            <NumberInput
+                                                w={80}
+                                                size="sm"
+                                                suffix="회"
+                                                min={1}
+                                                value={set.plannedReps}
+                                                onChange={(value) =>
+                                                    setSelectedRoutineDraft({
+                                                        ...selectedRoutineDraft,
+                                                        exercises: selectedRoutineDraft.exercises.map((ex) => ({
+                                                            ...ex,
+                                                            sets: ex.sets.map((s) =>
+                                                                s.exerciseSetKey === set.exerciseSetKey
+                                                                    ? { ...s, plannedReps: value }
+                                                                    : s
+                                                            ),
+                                                        })),
+                                                    })
+                                                }
+                                            />
+                                        </Group>
+
+                                        {/* 삭제 버튼 */}
+                                        <Button
+                                            color="red"
+                                            variant="subtle"
+                                            size="xs"
+                                            onClick={() => routineDetailXBtn(set.exerciseSetKey, selectedRoutineDraft, setSelectedRoutineDraft, exercise.exerciseKey)}
+                                        >
+                                            X
+                                        </Button>
+                                    </Group>
+                                ))}
+                            </Stack>
+                            <Center mt="md">
+                                <CiCirclePlus
+                                    size={30}
+                                    onClick={() => setSelectedRoutineDraft({
+                                        ...selectedRoutineDraft,
+                                        exercises: selectedRoutineDraft.exercises.map((ex) =>
+                                            ex.templateItemId === exercise.templateItemId ? {
+                                                ...ex,
+                                                sets: [
+                                                    ...ex.sets,
+                                                    {
+                                                        templateSetId: null,
+                                                        setNo: ex.sets.length + 1,
+                                                        plannedWeightKg: "",
+                                                        plannedReps: "",
+                                                        exerciseSetKey:  "newSet-" + crypto.randomUUID(),
+                                                    }
+                                                ]
+                                            } : ex
+                                        )}
+                                    )}
+                                />
+                            </Center>
+                        </Card>
+                    ))}
+                </Stack>
+                <Center mt="md">
+                    <CiCirclePlus
+                        size={40}
+                        onClick={() => setSelectedRoutineDraft({
+                            ...selectedRoutineDraft,
+                            exercises: [
+                                ...selectedRoutineDraft.exercises,
+                                {
+                                    templateItemId: null,
+                                    exerciseItemName: "",
+                                    sortOrder: selectedRoutineDraft.exercises.length + 1,
+                                    sets: [],
+                                    exerciseKey: "newExercise-" + crypto.randomUUID(),
+                                }
+                            ]
+                            }
+                        )}
+                    />
+                </Center>
+                <Button color="blue" mt="md" onClick={() => clickSelectedDetailSaveBtn(selectedRoutineDraft)}>저장</Button>
+            </Card>
+        </>
+    )
+}
+
+function clickSelectedDetailSaveBtn(selectedRoutineDraft) {
+    let isItemName = selectedRoutineDraft.exercises.some((ex) => ex.exerciseItemName === null || ex.exerciseItemName === "");
+    let isWeight = selectedRoutineDraft.exercises.some((ex) => ex.sets.some((s) => s.plannedWeightKg === null || s.plannedWeightKg === ""));
+    let isReps = selectedRoutineDraft.exercises.some((ex) => ex.sets.some((s) => s.plannedReps === null || s.plannedReps === ""));
+
+    if(isItemName){
+        alert("⚠️ 운동이름을 입력하세요!");
+        return;
+    }
+
+    if(isWeight || isReps){
+        alert("⚠️ 모든 세트의 무게와 횟수를 입력해주세요.");
+        return;
+    }
+
+    const params = {
+        templateId: selectedRoutineDraft.templateId,
+        templateName: selectedRoutineDraft.templateName,
+        exCategoryName: selectedRoutineDraft.exCategoryName,
+        exercises: selectedRoutineDraft.exercises.map((ex, exIdx) => ({
+            templateItemId: ex.templateItemId,
+            exerciseItemName: ex.exerciseItemName,
+            sortOrder: exIdx + 1,
+            sets: ex.sets.map((s, sIdx) => ({
+                templateSetId: s.templateSetId,
+                setNo: sIdx + 1,
+                plannedWeightKg: s.plannedWeightKg,
+                plannedReps: s.plannedReps,
+            }))
+        }))
+    }
+
+    api.put("/routine/update/detail", params)
+        .then((res) => {
+            console.log(res);
+            alert("루틴변경에 성공하였습니다!");
+        })
+}
+
+function routineDetailXBtn(key, selectedRoutineDraft, setSelectedRoutineDraft, exerciseKey) {
+
+    const newExercises = selectedRoutineDraft.exercises.map((ex) => {
+        if(ex.exerciseKey === exerciseKey) {
+            return{
+                ...ex,
+                sets: ex.sets.filter((s) => s.exerciseSetKey !== key)
+            }
+        }
+
+        return ex;
+    })
+
+    setSelectedRoutineDraft({
+        ...selectedRoutineDraft,
+        exercises: newExercises,
+    })
+}
+
+const WorkoutRoutineList = ({savedRoutines}) => {
+    const [selectedTemplateId, setSelectedTemplateId] = useState(null);
+    const [isRoutineDetailOpen, setIsRoutineDetailOpen] = useState(false);
+
+    if(savedRoutines.length > 0) {
+        return(
+            <>
+                <Modal opened={isRoutineDetailOpen} onClose={() => setIsRoutineDetailOpen(false)} title="나만의 루틴 수정">
+                    <WorkoutRoutineDetail
+                        selectedTemplateId={selectedTemplateId}
+                    />
+                </Modal>
+
+                {savedRoutines.map((routine) => (
+                    <Card
+                        mt="lg"
+                        key={routine.id}
+                        withBorder
+                        radius="lg"
+                        p="md"
+                        shadow="xs"
+                        className={classes.savedRoutineCard}
+                        onClick={() => {setIsRoutineDetailOpen(true); setSelectedTemplateId(routine.templateId);}}
+                    >
+                        <div className={classes.savedRoutineContent}>
+                            <Stack gap={6}>
+                                <Group gap="xs">
+                                    <Badge variant="light" radius="md">
+                                        {routine.exCategoryName}
+                                    </Badge>
+                                </Group>
+
+                                <Text fw={700} size="md">
+                                    {routine.templateName}
+                                </Text>
+
+                                <Text size="xs" c="dimmed">
+                                    총 {routine.exercises?.length ?? 0}개 운동
+                                </Text>
+                            </Stack>
+
+                            <Stack gap={6} className={classes.savedExerciseList}>
+                                {routine.exercises?.slice(0, 5).map((exercise) => (
+                                    <Group key={exercise.sortOrder} gap="xs" wrap="nowrap">
+                                        <Badge size="xs" variant="outline">
+                                            {exercise.sortOrder}
+                                        </Badge>
+                                        <Text size="sm" lineClamp={1}>
+                                            {exercise.exerciseItemName}
+                                        </Text>
+                                    </Group>
+                                ))}
+
+                                {(routine.exercises?.length ?? 0) > 5 && (
+                                    <HoverCard width={220} shadow="md" openDelay={200}>
+                                        <HoverCard.Target>
+                                            <Text
+                                                size="xs"
+                                                c="dimmed"
+                                                style={{ cursor: 'default' }}
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                외 {(routine.exercises?.length ?? 0) - 5}개 더보기
+                                            </Text>
+                                        </HoverCard.Target>
+
+                                        <HoverCard.Dropdown>
+                                            <Stack gap={6}>
+                                                {routine.exercises?.slice(5).map((exercise) => (
+                                                    <Group key={exercise.sortOrder} gap="xs" wrap="nowrap">
+                                                        <Badge size="xs" variant="outline">
+                                                            {exercise.sortOrder}
+                                                        </Badge>
+                                                        <Text size="sm">{exercise.exerciseItemName}</Text>
+                                                    </Group>
+                                                ))}
+                                            </Stack>
+                                        </HoverCard.Dropdown>
+                                    </HoverCard>
+                                )}
+                            </Stack>
+                        </div>
+                    </Card>
+                ))}
+            </>
+        )
+    }
 
     return(
         <>
-
+            <Text fw={700} size="xl">
+                나만의 운동 루틴 만들기
+            </Text>
+            <Text mt="sm" c="dimmed">
+                아직 저장된 루틴이 없습니다,
+                나만의 루틴을 추가해보세요! <br/>
+                생성한 루틴을 확인해보실 수 있습니다!
+            </Text>
         </>
     )
 }
 
 export default function WorkoutRoutine() {
+    const [savedRoutines, setSavedRoutines] = useState([]);
+
+    async function getSavedRoutines() {
+        const res = await api.get("/routine/view/list");
+        setSavedRoutines(res.data);
+    }
+
+    useEffect(() => {
+        getSavedRoutines();
+    },[]);
+
     return (
         <Grid className={classes.pageGrid} gutter="xl">
             <Grid.Col span={{ base: 12, lg: 8 }}>
                 <div className={classes.heroPanel}>
-                    <Text fw={700} size="xl">
-                        나만의 운동 루틴 만들기
-                    </Text>
-                    <Text mt="sm" c="dimmed">
-                        모바일에서는 입력 영역이 한 줄로 쌓이도록 조정해서 세트별 무게와 횟수를
-                        더 편하게 입력할 수 있습니다.
-                    </Text>
-                    <WorkoutRoutineList />
+                    <WorkoutRoutineList
+                        savedRoutines={savedRoutines}
+                    />
                 </div>
             </Grid.Col>
             <Grid.Col span={{ base: 12, lg: 4 }}>
                 <div className={classes.formPanel}>
-                    <RoutineBasicForm />
+                    <RoutineBasicForm
+                        getSavedRoutines={getSavedRoutines}
+                    />
                 </div>
             </Grid.Col>
         </Grid>
