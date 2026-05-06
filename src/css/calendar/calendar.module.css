@@ -10,7 +10,7 @@
     margin: 0;
     font-size: 28px;
     font-weight: 900;
-    color: #0f172a;
+    color: darkcyan;
 }
 
 .calendarHeader p {
@@ -122,17 +122,17 @@
 }
 
 /* 운동 종류별 */
-.calendarPanel :global(.workout-strength) {
+.calendarPanel :global(.PLANNED) {
     background: linear-gradient(90deg, #0ea5e9, #2563eb) !important;
 }
 
-.calendarPanel :global(.workout-leg) {
+.calendarPanel :global(.FINISHED) {
     background: linear-gradient(90deg, #22c55e, #16a34a) !important;
 }
 
-.calendarPanel :global(.workout-cardio) {
+/*.calendarPanel :global(.FINISH) {
     background: linear-gradient(90deg, #f97316, #ef4444) !important;
-}
+}*/
 
 /* 이벤트 글자 */
 .calendarPanel :global(.fc-event-title) {
@@ -193,6 +193,19 @@
 
 .customForm {
     padding: 6px 2px;
+}
+
+.detailTitleInput {
+    font-size: 23px;
+    font-weight: 900;
+    padding: 0;
+    height: auto;
+    background: transparent;
+}
+
+.detailMemoInput{
+    height: 100px;
+    background: transparent;
 }
 
 /* 모바일 */
